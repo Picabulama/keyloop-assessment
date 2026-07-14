@@ -1,0 +1,1098 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Intelligent Inventory Dashboard API",
+    "description": "REST API for dealership vehicle inventory management: filterable inventory listing, aging stock (>90 days) identification, and per-vehicle action logging.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/metrics": {
+      "get": {
+        "summary": "Metrics",
+        "description": "Endpoint that serves Prometheus metrics.",
+        "operationId": "metrics_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "List Vehicles",
+        "operationId": "list_vehicles_vehicles_get",
+        "parameters": [
+          {
+            "name": "make",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by make (partial match)",
+              "title": "Make"
+            },
+            "description": "Filter by make (partial match)"
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by model (partial match)",
+              "title": "Model"
+            },
+            "description": "Filter by model (partial match)"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/VehicleStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "dealership_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dealership Id"
+            }
+          },
+          {
+            "name": "min_age_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum days in inventory",
+              "title": "Min Age Days"
+            },
+            "description": "Minimum days in inventory"
+          },
+          {
+            "name": "max_age_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Maximum days in inventory",
+              "title": "Max Age Days"
+            },
+            "description": "Maximum days in inventory"
+          },
+          {
+            "name": "aging_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only return vehicles in aging stock (>90 days)",
+              "default": false,
+              "title": "Aging Only"
+            },
+            "description": "Only return vehicles in aging stock (>90 days)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Create Vehicle",
+        "operationId": "create_vehicle_vehicles_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/aging-summary": {
+      "get": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Get Aging Summary",
+        "operationId": "get_aging_summary_vehicles_aging_summary_get",
+        "parameters": [
+          {
+            "name": "dealership_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Dealership Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgingSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{vehicle_id}": {
+      "get": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Get Vehicle",
+        "operationId": "get_vehicle_vehicles__vehicle_id__get",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Update Vehicle",
+        "operationId": "update_vehicle_vehicles__vehicle_id__patch",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Delete Vehicle",
+        "operationId": "delete_vehicle_vehicles__vehicle_id__delete",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{vehicle_id}/actions": {
+      "get": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "List Actions",
+        "operationId": "list_actions_vehicles__vehicle_id__actions_get",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InventoryActionRead"
+                  },
+                  "title": "Response List Actions Vehicles  Vehicle Id  Actions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "actions"
+        ],
+        "summary": "Create Action",
+        "operationId": "create_action_vehicles__vehicle_id__actions_post",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InventoryActionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryActionRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActionStatus": {
+        "type": "string",
+        "enum": [
+          "no_action",
+          "price_reduction_planned",
+          "transfer_planned",
+          "promotion_planned",
+          "wholesale_planned",
+          "other"
+        ],
+        "title": "ActionStatus"
+      },
+      "AgingSummary": {
+        "properties": {
+          "aging_threshold_days": {
+            "type": "integer",
+            "title": "Aging Threshold Days"
+          },
+          "total_vehicles": {
+            "type": "integer",
+            "title": "Total Vehicles"
+          },
+          "aging_vehicle_count": {
+            "type": "integer",
+            "title": "Aging Vehicle Count"
+          },
+          "aging_percentage": {
+            "type": "number",
+            "title": "Aging Percentage"
+          },
+          "oldest_days_in_inventory": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Oldest Days In Inventory"
+          }
+        },
+        "type": "object",
+        "required": [
+          "aging_threshold_days",
+          "total_vehicles",
+          "aging_vehicle_count",
+          "aging_percentage"
+        ],
+        "title": "AgingSummary"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InventoryActionCreate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ActionStatus"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "InventoryActionCreate"
+      },
+      "InventoryActionRead": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ActionStatus"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "id",
+          "vehicle_id",
+          "created_at"
+        ],
+        "title": "InventoryActionRead"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VehicleCreate": {
+        "properties": {
+          "vin": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Vin"
+          },
+          "make": {
+            "type": "string",
+            "title": "Make"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "year": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Year"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Price"
+          },
+          "mileage": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mileage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus",
+            "default": "in_stock"
+          },
+          "date_received": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Received"
+          },
+          "dealership_id": {
+            "type": "string",
+            "title": "Dealership Id",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vin",
+          "make",
+          "model",
+          "year",
+          "price",
+          "date_received"
+        ],
+        "title": "VehicleCreate"
+      },
+      "VehicleListResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VehicleRead"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "items"
+        ],
+        "title": "VehicleListResponse"
+      },
+      "VehicleRead": {
+        "properties": {
+          "vin": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Vin"
+          },
+          "make": {
+            "type": "string",
+            "title": "Make"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "year": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Year"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Price"
+          },
+          "mileage": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mileage"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus",
+            "default": "in_stock"
+          },
+          "date_received": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Received"
+          },
+          "dealership_id": {
+            "type": "string",
+            "title": "Dealership Id",
+            "default": "default"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "days_in_inventory": {
+            "type": "integer",
+            "title": "Days In Inventory"
+          },
+          "is_aging": {
+            "type": "boolean",
+            "title": "Is Aging"
+          },
+          "latest_action": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InventoryActionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "vin",
+          "make",
+          "model",
+          "year",
+          "price",
+          "date_received",
+          "id",
+          "created_at",
+          "updated_at",
+          "days_in_inventory",
+          "is_aging"
+        ],
+        "title": "VehicleRead"
+      },
+      "VehicleStatus": {
+        "type": "string",
+        "enum": [
+          "in_stock",
+          "pending_sale",
+          "sold"
+        ],
+        "title": "VehicleStatus"
+      },
+      "VehicleUpdate": {
+        "properties": {
+          "vin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vin"
+          },
+          "make": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Make"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "trim": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trim"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 2100.0,
+                "minimum": 1900.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price"
+          },
+          "mileage": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mileage"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VehicleStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "date_received": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date Received"
+          },
+          "dealership_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dealership Id"
+          }
+        },
+        "type": "object",
+        "title": "VehicleUpdate"
+      }
+    }
+  }
+}
